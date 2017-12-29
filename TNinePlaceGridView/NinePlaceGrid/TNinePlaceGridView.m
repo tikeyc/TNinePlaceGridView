@@ -9,10 +9,13 @@
 #import "TNinePlaceGridView.h"
 
 #import "TShowListImageButton.h"
-#import "UIView+YYAdd.h"
-#import "Masonry.h"
 
 #define item_x_gap 5
+
+@interface TNinePlaceGridCollectionCell ()
+
+
+@end
 
 @implementation TNinePlaceGridCollectionCell
 
@@ -41,7 +44,7 @@
 ///////
 
 
-@interface TNinePlaceGridView ()<UICollectionViewDataSource,UICollectionViewDelegate>
+@interface TNinePlaceGridView ()<UICollectionViewDataSource,UICollectionViewDelegate,UIViewControllerPreviewingDelegate>
 
 
 @property (nonatomic,assign)CGFloat itemWith;
@@ -54,8 +57,8 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-//        [self initSubView];
-//        [self initProperty];
+        //        [self initSubView];
+        //        [self initProperty];
     }
     return self;
 }
@@ -64,8 +67,8 @@
 - (void)awakeFromNib {
     [super awakeFromNib];
     
-//    [self initSubView];
-//    [self initProperty];
+    //    [self initSubView];
+    //    [self initProperty];
     
 }
 
@@ -74,7 +77,7 @@
     
     [self initSubView];
     [self initProperty];
-
+    
 }
 
 
@@ -86,7 +89,7 @@
 
 - (void)initProperty {
     //test
-//    self.showImages = @[@"beauty.jpg",@"beauty1.jpg",@"beauty.jpg",@"glenceLuanch.jpg",@"live_icon.jpg"];
+    //    self.showImages = @[@"beauty.jpg",@"beauty1.jpg",@"beauty.jpg",@"glenceLuanch.jpg",@"live_icon.jpg"];
 }
 
 
@@ -123,18 +126,18 @@
 - (void)setShowImages:(NSArray *)showImages {
     _showImages = showImages;
     /*如果需要自适应屏幕宽度的item打开此部分代码
-    NSInteger rowNum = _showImages.count/3;
-    if (_showImages.count%3 == 0) {
-        
-    } else {
-        ++rowNum;
-    }
-    CGFloat height = rowNum * (self.itemWith + item_x_gap);
-    self.height = height;
-    self.collectionView.height = height;
-    self.collectionView.width = self.width;
-    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
-    layout.itemSize = CGSizeMake(self.itemWith, self.itemWith);*/
+     NSInteger rowNum = _showImages.count/3;
+     if (_showImages.count%3 == 0) {
+     
+     } else {
+     ++rowNum;
+     }
+     CGFloat height = rowNum * (self.itemWith + item_x_gap);
+     self.height = height;
+     self.collectionView.height = height;
+     self.collectionView.width = self.width;
+     UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
+     layout.itemSize = CGSizeMake(self.itemWith, self.itemWith);*/
     [self.collectionView  reloadData];
 }
 
@@ -155,6 +158,11 @@
     cell.imageView.myCollectionView = collectionView;
     cell.imageView.showImages = self.showImages;
     
+    //
+    if ([self.viewController respondsToSelector:@selector(registerForPreviewingWithDelegate:sourceView:)]) {
+        [self.viewController registerForPreviewingWithDelegate:self sourceView:cell.imageView];
+    }
+    
     return cell;
 }
 
@@ -166,6 +174,22 @@
     
     
     
+}
+
+
+#pragma mark - UIViewControllerPreviewingDelegate
+
+- (nullable UIViewController *)previewingContext:(id <UIViewControllerPreviewing>)previewingContext viewControllerForLocation:(CGPoint)location NS_AVAILABLE_IOS(9_0) {
+    TShowListImageButton *showListImageButton = (TShowListImageButton *)previewingContext.sourceView;
+    TShowListImageCollectionViewController *vc = [showListImageButton showListImageCollectionVCIs3DTouch:YES];
+    [vc showListImageIs3DTouch:YES];
+    return vc;
+}
+
+- (void)previewingContext:(id <UIViewControllerPreviewing>)previewingContext commitViewController:(UIViewController *)viewControllerToCommit NS_AVAILABLE_IOS(9_0) {
+    NSLog(@"commitViewController");
+    TShowListImageButton *showListImageButton = (TShowListImageButton *)previewingContext.sourceView;
+    [showListImageButton showImageListToWindowIs3DTouch:YES];
 }
 
 @end

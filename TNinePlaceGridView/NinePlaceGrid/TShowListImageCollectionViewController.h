@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
+typedef void(^ShowListImageVCBlock)(NSInteger currentIndex);//如果是-1表示缩小图片
+
 @interface TShowListImageCollectionViewController : UIViewController
 
 @property (nonatomic,strong)UIImageView *animationImageView;
@@ -20,7 +22,11 @@
 @property (nonatomic,strong)UIImage *currentImage;
 @property (nonatomic,strong)NSArray *showImages;
 
+@property (nonatomic,assign)BOOL is3DTouch;
 
-- (void)showListImage;
+@property (nonatomic,copy)ShowListImageVCBlock showListImageVCBlock;//如果是-1表示缩小图片
+
+- (void)showListImageIs3DTouch:(BOOL)is3DTouch;
 
 @end
+

@@ -8,7 +8,6 @@
 
 #import "TShowListImageButton.h"
 
-#import "TShowListImageCollectionViewController.h"
 #import "TNinePlaceGridView.h"
 
 @interface TShowListImageButton ()
@@ -48,6 +47,9 @@
 }
 
 - (NSMutableArray *)converFrames {
+    if (_myCollectionView == nil) {//对于一个item占据整个_myCollectionView的情况：如TCycleScrollListImageView的无限循环滑动
+        return nil;
+    }
     _converFrames = [NSMutableArray array];
     for (int i = 0; i < _showImages.count; i++) {
         
@@ -61,24 +63,26 @@
 #pragma mark - action
 
 - (void)buttonClick:(UIButton *)button {
-    [self showImageListToWindowFromImages:self.showImages];
+    [self showImageListToWindowIs3DTouch:NO];
+    if (_showListImageVCBlock) {
+        _showListImageVCBlock(-2);//如果是-2表示放大图片
+    }
 }
 
 #pragma mark - show
 
-- (void)showImageListToWindowFromImages:(NSArray *)showImages {
-    
+- (void)showImageListToWindowIs3DTouch:(BOOL)is3DTouch {
+    self.showListImageCollectionVC = [self showListImageCollectionVCIs3DTouch:is3DTouch];
     self.showListImageCollectionVC.view.frame = self.window.frame;
     [self.window addSubview:self.showListImageCollectionVC.view];
-    [self.showListImageCollectionVC showListImage];
+    [self.showListImageCollectionVC showListImageIs3DTouch:is3DTouch];
     
 }
 
 
-- (TShowListImageCollectionViewController *)showListImageCollectionVC {
-    if (_showListImageCollectionVC == nil) {
-        _showListImageCollectionVC = [[TShowListImageCollectionViewController alloc] init];
-    }
+- (TShowListImageCollectionViewController *)showListImageCollectionVCIs3DTouch:(BOOL)is3DTouch {
+    _showListImageCollectionVC = nil;
+    _showListImageCollectionVC = [[TShowListImageCollectionViewController alloc] init];
     //在访问_showListImageCollectionVC.view之前设置好相关属性
     CGRect converFrame = [self convertRect:self.frame toView:self.window];
     _showListImageCollectionVC.currentIndex = self.tag;
@@ -86,6 +90,8 @@
     _showListImageCollectionVC.converFrames = self.converFrames;
     _showListImageCollectionVC.currentImage = self.currentImage;
     _showListImageCollectionVC.showImages = self.showImages;
+    _showListImageCollectionVC.showListImageVCBlock = _showListImageVCBlock;
+    _showListImageCollectionVC.is3DTouch = is3DTouch;
     return _showListImageCollectionVC;
 }
 

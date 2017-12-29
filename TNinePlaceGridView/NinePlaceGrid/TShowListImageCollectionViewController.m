@@ -8,17 +8,7 @@
 
 #import "TShowListImageCollectionViewController.h"
 
-#import "ReactiveObjC.h"
-#import "UIGestureRecognizer+YYAdd.h"
-#import "Masonry.h"
-#import "UIControl+YYAdd.h"
 #import "UIView+Extension.h"
-
-/** 屏幕宽度 */
-#define TScreenWidth [UIScreen mainScreen].bounds.size.width
-/** 屏幕高度 */
-#define TScreenHeight [UIScreen mainScreen].bounds.size.height
-
 
 ///////
 static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
@@ -49,29 +39,29 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
         [_scrollView setZoomScale:1.0];
         [self.contentView addSubview:_scrollView];
         _scrollView.frame = CGRectMake(0, 0, TScreenWidth, TScreenHeight);
-//        [_scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
-//            make.left.equalTo(@0);
-//            make.top.equalTo(@0);
-//            make.right.equalTo(@0);
-//            make.bottom.equalTo(@0);
-//        }];
+        //        [_scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
+        //            make.left.equalTo(@0);
+        //            make.top.equalTo(@0);
+        //            make.right.equalTo(@0);
+        //            make.bottom.equalTo(@0);
+        //        }];
         //
         _imageView = [[UIImageView alloc] init];
         _imageView.contentMode = UIViewContentModeScaleAspectFit;
         [_scrollView addSubview:_imageView];
         _imageView.frame = CGRectMake(0, 0, TScreenWidth, TScreenHeight);
-//        [_imageView mas_makeConstraints:^(MASConstraintMaker *make) {
-//            make.left.equalTo(@0);
-//            make.top.equalTo(@0);
-//            make.right.equalTo(@0);
-//            make.bottom.equalTo(@0);
-//        }];
+        //        [_imageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        //            make.left.equalTo(@0);
+        //            make.top.equalTo(@0);
+        //            make.right.equalTo(@0);
+        //            make.bottom.equalTo(@0);
+        //        }];
         //
-        
+        @weakify(self)
         UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithActionBlock:^(UILongPressGestureRecognizer  *_Nonnull sender) {
-            
+            @strongify(self)
             if (sender.state == UIGestureRecognizerStateBegan) {
-//                UIImageWriteToSavedPhotosAlbum(self.imageView.image, self, @selector(image:didFinishSavingWithError:contextInfo:), NULL);
+                //                UIImageWriteToSavedPhotosAlbum(self.imageView.image, self, @selector(image:didFinishSavingWithError:contextInfo:), NULL);
             }
             
         }];
@@ -82,11 +72,11 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
 }
 
 - (void)image:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
-//    if (error) {
-//        [SVProgressHUD showErrorWithStatus:@"保存失败!"];
-//    } else {
-//        [SVProgressHUD showSuccessWithStatus:@"保存成功!"];
-//    }
+    //    if (error) {
+    //        [SVProgressHUD showErrorWithStatus:@"保存失败!"];
+    //    } else {
+    //        [SVProgressHUD showSuccessWithStatus:@"保存成功!"];
+    //    }
 }
 
 #pragma mark - UIScrollViewDelegate
@@ -95,7 +85,7 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
     return _imageView;
 }
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView {
-
+    
 }
 - (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(nullable UIView *)view {
     
@@ -109,8 +99,8 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
 
 @interface TShowListImageCollectionViewController ()<UICollectionViewDataSource,UICollectionViewDelegate>
 
-
-
+//用于还原上次放大的图片
+@property (nonatomic, strong)TImageListCollectionCell *lastImageListCollectionCell;
 
 @end
 
@@ -121,9 +111,18 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
     
     // Uncomment the following line to preserve selection between presentations
     // self.clearsSelectionOnViewWillAppear = NO;
-    
+    self.view.backgroundColor = [UIColor blackColor];
     [self initProperty];
     
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    NSLog(@"viewDidAppear");
+    if (_is3DTouch) {
+        self.collectionView.hidden = NO;
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.currentIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -132,37 +131,54 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
 }
 
 /*
-#pragma mark - Navigation
+ #pragma mark - Navigation
+ 
+ // In a storyboard-based application, you will often want to do a little preparation before navigation
+ - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+ // Get the new view controller using [segue destinationViewController].
+ // Pass the selected object to the new view controller.
+ }
+ */
 
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
-
-- (void)showListImage {
-
-    self.collectionView.hidden = YES;
-    self.pageControl.hidden = YES;
-    [UIView animateWithDuration:0.3 animations:^{
-        self.animationImageView.frame = self.view.window.frame;
-    } completion:^(BOOL finished) {
+- (void)showListImageIs3DTouch:(BOOL)is3DTouch {
+    
+    if (is3DTouch) {
+        NSLog(@"showListImageIs3DTouch");
+        _is3DTouch = is3DTouch;
+        self.animationImageView.frame = CGRectMake(0, 0 - (20 + kAppNavigationBarHeight), self.view.frame.size.width, self.view.frame.size.height);
         self.animationImageView.hidden = YES;
-        self.collectionView.hidden = NO;
-        self.pageControl.hidden = NO;
-        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.currentIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
-    }];
+        self.collectionView.hidden = YES;//在viewDidAppear中显示，
+        //[self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.currentIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];在viewDidAppear中移动，不然轻度按压时滑到制定位置，这是BUG？
+    } else {
+        self.collectionView.hidden = YES;
+        self.pageControl.hidden = YES;
+        [UIView animateWithDuration:0.3 animations:^{
+            self.animationImageView.frame = self.view.window.frame;
+        } completion:^(BOOL finished) {
+            self.animationImageView.hidden = YES;
+            self.collectionView.hidden = NO;
+            self.pageControl.hidden = NO;
+            [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:self.currentIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:NO];
+        }];
+    }
+    
     
 }
 
 - (void)hiddenListImage {
+    if (_showListImageVCBlock) {
+        _showListImageVCBlock(-1);//如果是-1表示缩小图片
+    }
+    
     self.animationImageView.image = [UIImage imageNamed:_showImages[_currentIndex]];
     self.animationImageView.hidden = NO;
     self.collectionView.hidden = YES;
     self.pageControl.hidden = YES;
     [UIView animateWithDuration:0.3 animations:^{
-        NSString *converFrameString = [self.converFrames objectAtIndex:self.currentIndex];
+        NSString *converFrameString;
+        if (self.converFrames) {
+            converFrameString = [self.converFrames objectAtIndex:self.currentIndex];
+        }else converFrameString = NSStringFromCGRect(self.converFrame);
         self.animationImageView.frame = CGRectFromString(converFrameString);//self.converFrame;
     } completion:^(BOOL finished) {
         [self.animationImageView removeFromSuperview];
@@ -190,8 +206,8 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
     
     self.view.backgroundColor = [UIColor clearColor];
     
-    [self animationImageView];
     [self collectionView];
+    [self animationImageView];
     [self pageControl];
 }
 
@@ -225,6 +241,9 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
 - (UIImageView *)animationImageView {
     if (_animationImageView == nil) {
         _animationImageView = [[UIImageView alloc] initWithImage:self.currentImage];
+        if (_is3DTouch) {
+            _animationImageView.backgroundColor = [UIColor blackColor];
+        }
         _animationImageView.contentMode = UIViewContentModeScaleAspectFit;
         _animationImageView.frame = self.converFrame;
         [self.view addSubview:_animationImageView];
@@ -239,11 +258,10 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
         _pageControl.currentPageIndicatorTintColor = [UIColor redColor];
         @weakify(self)
         [[_pageControl rac_signalForControlEvents:UIControlEventValueChanged] subscribeNext:^(__kindof UIPageControl * _Nullable x) {
-          @strongify(self)
+            @strongify(self)
             [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:x.currentPage inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:YES];
             self.currentIndex = x.currentPage;
         }];
-        
         [self.view addSubview:_pageControl];
         [_pageControl mas_makeConstraints:^(MASConstraintMaker *make) {
             make.left.equalTo(@0);
@@ -257,13 +275,13 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
 #pragma mark <UICollectionViewDataSource>
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-
+    
     return 1;
 }
 
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-
+    
     return self.showImages.count;
 }
 
@@ -283,7 +301,25 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
     
     [self hiddenListImage];
-    
+    if (_showListImageVCBlock) {
+        _showListImageVCBlock(-1);//如果是-1表示缩小图片
+    }
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didEndDisplayingCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath{
+    NSArray *visibleCells = [collectionView visibleCells];
+    if (visibleCells.count == 0) {
+        return;
+    }
+    TImageListCollectionCell *imageListCollectionCell = (TImageListCollectionCell *)[visibleCells firstObject];
+    if (self.lastImageListCollectionCell != nil && self.lastImageListCollectionCell.scrollView.zoomScale != 1.0) {
+        [self.lastImageListCollectionCell.scrollView setZoomScale:1.0];
+    }
+    self.lastImageListCollectionCell = imageListCollectionCell;
+    NSIndexPath *currentIndexPath = [collectionView indexPathForCell:imageListCollectionCell];
+    if (_showListImageVCBlock) {
+        _showListImageVCBlock(currentIndexPath.row);
+    }
 }
 
 #pragma mark <UIScrollViewDelegate>
@@ -299,3 +335,4 @@ static NSString *imageListCollectionCellIdentifier = @"imageListCollectionCell";
 
 
 @end
+
